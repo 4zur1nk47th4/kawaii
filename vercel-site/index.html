@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Kawaii ESP32-CAM Studio ✨</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'anime-pink': '#FF85A2',
+                        'anime-purple': '#B388FF',
+                        'anime-yellow': '#FFE17D',
+                        'anime-blue': '#70D6FF',
+                        'anime-mint': '#99E2B4'
+                    },
+                    fontFamily: {
+                        'pop': ['"Mochiy Pop One"', 'sans-serif'],
+                        'fredoka': ['Fredoka', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #ffcbf2 0%, #e7c6ff 30%, #c8b6ff 60%, #b8c0ff 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .sparkle { position: absolute; pointer-events: none; animation: floatSparkle 4s linear infinite; }
+        @keyframes floatSparkle {
+            0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; }
+            50% { opacity: 0.9; }
+            100% { transform: translateY(-100px) rotate(180deg) scale(1.2); opacity: 0; }
+        }
+        .anime-card-shadow {
+            box-shadow: 0 10px 30px rgba(179, 136, 255, 0.3), 0 0 15px rgba(255, 133, 162, 0.4);
+            border: 3px solid #FFFFFF;
+        }
+        .neon-btn { transition: all 0.2s ease; }
+        .neon-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 0 20px rgba(255,133,162,.8), 0 0 30px rgba(179,136,255,.6); }
+        .neon-btn:active { transform: translateY(1px) scale(0.98); }
+        .glow-pulse-on { animation: pulseGlowOn 1.5s infinite alternate; }
+        @keyframes pulseGlowOn {
+            from { box-shadow: 0 0 10px #FFDD00, 0 0 20px #FFDD00; }
+            to { box-shadow: 0 0 20px #FFDD00, 0 0 35px #FF85A2; }
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #ffcbf2; }
+        ::-webkit-scrollbar-thumb { background: #B388FF; border-radius: 10px; }
+    </style>
+</head>
+<body class="relative overflow-x-hidden text-gray-800 pb-12">
+
+    <div id="sparkle-container"></div>
+
+    <header class="pt-6 pb-2 text-center relative z-10 px-4">
+        <div class="inline-block bg-white/80 backdrop-blur-md px-8 py-4 rounded-full border-4 border-anime-pink shadow-lg mb-2 transform -rotate-1 hover:rotate-0 transition-transform">
+            <h1 class="font-pop text-2xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 flex items-center justify-center gap-3">
+                <i class="fa-solid font-normal fa-wand-magic-sparkles text-anime-yellow text-3xl animate-bounce"></i>
+                Kawaii ESP32 Studio
+                <i class="fa-solid font-normal fa-cat text-anime-pink text-3xl"></i>
+            </h1>
+        </div>
+        <p class="text-sm sm:text-base font-semibold text-purple-800 bg-white/60 inline-block px-4 py-1 rounded-full shadow-sm">
+            📡 Camera setup hotspot: <span class="text-pink-600 font-bold">tka86</span> · ☁️ Live over the internet
+        </p>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-4 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+
+        <!-- Video -->
+        <section class="lg:col-span-8 flex flex-col gap-4">
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-4 sm:p-6 anime-card-shadow relative">
+
+                <div class="absolute -top-5 -left-3 bg-anime-yellow text-pink-700 px-4 py-1.5 rounded-full text-xs font-pop border-2 border-white shadow-md flex items-center gap-1.5">
+                    <i class="fa-solid fa-heart animate-pulse"></i> LIVE FEED 🌸
+                </div>
+
+                <div class="flex justify-between items-center mb-3 pt-2">
+                    <div class="flex items-center gap-2">
+                        <span id="status-dot" class="w-3.5 h-3.5 rounded-full bg-red-500 inline-block animate-ping"></span>
+                        <span id="status-text" class="text-xs font-bold uppercase tracking-wider text-gray-500">Connecting...</span>
+                    </div>
+                    <button onclick="toggleFullScreen()" class="text-xs bg-anime-purple text-white px-3 py-1.5 rounded-xl hover:bg-purple-600 transition flex items-center gap-1 font-bold">
+                        <i class="fa-solid fa-expand"></i> Full Screen
+                    </button>
+                </div>
+
+                <div id="video-container" class="relative w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden border-4 border-anime-pink shadow-inner flex items-center justify-center group">
+                    <img id="stream-img" src="" alt="ESP32 Live Stream" class="w-full h-full object-contain hidden">
+
+                    <div id="stream-placeholder" class="text-center p-6 flex flex-col items-center gap-3 text-white">
+                        <div class="w-20 h-20 bg-pink-100/20 rounded-full flex items-center justify-center border-2 border-dashed border-pink-300 animate-spin">
+                            <i class="fa-solid fa-camera-retro text-4xl text-anime-pink"></i>
+                        </div>
+                        <p id="placeholder-title" class="font-pop text-lg text-pink-200">Camera Disconnected</p>
+                        <p id="placeholder-sub" class="text-xs text-gray-300 max-w-xs">Power on your ESP32-CAM and make sure it is connected to the internet ✨</p>
+                    </div>
+
+                    <div class="absolute bottom-3 right-3 bg-black/40 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-pop opacity-75 group-hover:opacity-100 transition">
+                        ESP32-CAM ⚡ <span id="fps">0.0</span> fps
+                    </div>
+                </div>
+
+                <div class="mt-4 flex flex-wrap justify-between items-center gap-3 bg-pink-50 p-3 rounded-2xl border border-pink-200">
+                    <div class="flex items-center gap-3 text-xs sm:text-sm text-purple-700 font-semibold">
+                        <i class="fa-solid fa-cloud text-anime-purple text-xl"></i>
+                        <span>Camera → Vercel → you. No IP address needed!</span>
+                    </div>
+                    <button onclick="restartStream()" class="neon-btn bg-gradient-to-r from-anime-pink to-anime-purple text-white px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow">
+                        <i class="fa-solid fa-rotate"></i> Reconnect
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Controls -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 anime-card-shadow relative flex flex-col items-center text-center">
+                <div class="absolute -top-4 bg-anime-purple text-white px-4 py-1 rounded-full text-xs font-pop border-2 border-white shadow">
+                    💡 FLASH LIGHT CONTROL
+                </div>
+
+                <div class="mt-3 mb-4 w-full">
+                    <div id="light-status-card" class="bg-gray-100 border-2 border-gray-300 rounded-2xl p-3 transition-all duration-300">
+                        <span class="text-xs uppercase tracking-widest font-bold text-gray-500 block mb-1">LED Flash Status</span>
+                        <span id="light-status-text" class="font-pop text-xl text-gray-600 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-moon"></i> LIGHT IS OFF
+                        </span>
+                    </div>
+                </div>
+
+                <button id="toggle-light-btn" onclick="toggleLight()" class="neon-btn w-40 h-40 rounded-full bg-gradient-to-b from-yellow-300 to-amber-400 border-8 border-white shadow-xl flex flex-col items-center justify-center gap-2 text-gray-800 transition-all transform active:scale-95 cursor-pointer my-2">
+                    <div class="w-16 h-16 rounded-full bg-white/40 flex items-center justify-center">
+                        <i id="light-icon" class="fa-solid fa-lightbulb text-4xl text-gray-600"></i>
+                    </div>
+                    <span id="btn-action-text" class="font-pop text-sm tracking-wide">TURN ON</span>
+                </button>
+
+                <p class="text-xs text-purple-600 font-semibold mt-3">
+                    <i class="fa-solid fa-wand-magic"></i> Toggles the flash LED on GPIO 4
+                </p>
+            </div>
+
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 anime-card-shadow relative">
+                <div class="absolute -top-4 left-6 bg-anime-pink text-white px-4 py-1 rounded-full text-xs font-pop border-2 border-white shadow">
+                    ⚙️ STREAM ADJUSTMENTS
+                </div>
+
+                <div class="space-y-4 pt-2">
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-gray-700 mb-1">
+                            <span><i class="fa-solid fa-sun text-amber-400"></i> Brightness</span>
+                            <span id="val-brightness">0</span>
+                        </div>
+                        <input type="range" min="-2" max="2" value="0" id="slider-brightness"
+                               oninput="document.getElementById('val-brightness').innerText = this.value"
+                               onchange="sendSetting('brightness', this.value)"
+                               class="w-full accent-anime-pink cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-gray-700 mb-1">
+                            <span><i class="fa-solid fa-circle-half-stroke text-purple-400"></i> Contrast</span>
+                            <span id="val-contrast">0</span>
+                        </div>
+                        <input type="range" min="-2" max="2" value="0" id="slider-contrast"
+                               oninput="document.getElementById('val-contrast').innerText = this.value"
+                               onchange="sendSetting('contrast', this.value)"
+                               class="w-full accent-anime-purple cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">
+                            <i class="fa-solid fa-tv text-blue-400"></i> Stream Resolution
+                        </label>
+                        <select id="select-framesize" onchange="sendSetting('framesize', this.value)"
+                                class="w-full bg-pink-50 border-2 border-pink-200 text-gray-700 text-xs rounded-xl p-2.5 focus:outline-none focus:border-anime-pink font-semibold">
+                            <option value="5" selected>QVGA (320x240) - Fast</option>
+                            <option value="8">VGA (640x480) - Balanced</option>
+                            <option value="9">SVGA (800x600) - Detailed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-5 p-3 bg-purple-50 rounded-2xl border border-purple-200 flex items-center justify-between">
+                    <div class="text-xs text-purple-700 font-bold">
+                        <span>(⁠っ⁠.⁠❛⁠ ⁠u⁠ ⁠❛⁠.⁠)⁠っ</span>
+                        <span id="sticker-sub" class="block text-[10px] text-purple-500 font-normal">Waiting for camera</span>
+                    </div>
+                    <i class="fa-solid fa-heart text-pink-400 text-lg"></i>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // ---------- state ----------
+        let isLightOn = false;
+        let accessKey = '';
+        let askedForKey = false;
+        let lastLocalChange = 0;     // ms timestamp, stops the poller overwriting a fresh local change
+        let cameraOnline = false;
+        let hasFrame = false;
+        let frameTimer = null;
+        let frameCount = 0;
+        let fpsStart = Date.now();
+
+        try { accessKey = localStorage.getItem('cam_access_key') || ''; } catch (e) {}
+
+        const $ = (id) => document.getElementById(id);
+        const keyQ = () => encodeURIComponent(accessKey);
+
+        // ---------- sparkles ----------
+        (function createSparkles() {
+            const container = $('sparkle-container');
+            const icons = ['✨', '🌸', '⭐', '💖', '💫'];
+            for (let i = 0; i < 15; i++) {
+                const s = document.createElement('div');
+                s.className = 'sparkle text-xl';
+                s.innerText = icons[Math.floor(Math.random() * icons.length)];
+                s.style.left = Math.random() * 100 + 'vw';
+                s.style.top = Math.random() * 100 + 'vh';
+                s.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                s.style.animationDelay = (Math.random() * 2) + 's';
+                container.appendChild(s);
+            }
+        })();
+
+        // ---------- API helper ----------
+        function askForKey() {
+            if (askedForKey) return;
+            askedForKey = true;
+            const k = prompt('This page is protected 🔑 Enter the access key:');
+            if (k) {
+                accessKey = k.trim();
+                try { localStorage.setItem('cam_access_key', accessKey); } catch (e) {}
+                location.reload();
+            }
+        }
+
+        async function api(method, body) {
+            const r = await fetch('/api/control?k=' + keyQ(), {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: body ? JSON.stringify(body) : undefined
+            });
+            if (r.status === 401) { askForKey(); throw new Error('locked'); }
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        }
+
+        // ---------- status UI ----------
+        function setStatus(text, color) {
+            const colors = {
+                green: ['text-emerald-500', 'bg-emerald-500', ''],
+                amber: ['text-amber-500', 'bg-amber-400', 'animate-ping'],
+                red: ['text-red-500', 'bg-red-500', '']
+            };
+            const c = colors[color];
+            $('status-text').innerText = text;
+            $('status-text').className = 'text-xs font-bold uppercase tracking-wider ' + c[0];
+            $('status-dot').className = 'w-3.5 h-3.5 rounded-full inline-block ' + c[1] + ' ' + c[2];
+        }
+
+        function showPlaceholder() {
+            $('stream-img').classList.add('hidden');
+            $('stream-placeholder').classList.remove('hidden');
+            if (cameraOnline) {
+                $('placeholder-title').innerText = 'Waking up the camera…';
+                $('placeholder-sub').innerText = 'The camera is online and will start streaming in a second ✨';
+                setStatus('CAMERA ONLINE – STARTING', 'amber');
+                $('sticker-sub').innerText = 'Camera online';
+            } else {
+                $('placeholder-title').innerText = 'Camera Disconnected';
+                $('placeholder-sub').innerText = 'Power on your ESP32-CAM and make sure it is connected to the internet ✨';
+                setStatus('OFFLINE', 'red');
+                $('sticker-sub').innerText = 'Waiting for camera';
+            }
+        }
+
+        function showLive() {
+            $('stream-img').classList.remove('hidden');
+            $('stream-placeholder').classList.add('hidden');
+            setStatus('ONLINE (LIVE)', 'green');
+            $('sticker-sub').innerText = 'System Ready for Stream';
+        }
+
+        // ---------- frame loop ----------
+        const img = $('stream-img');
+
+        function nextFrame() {
+            img.src = '/api/frame?k=' + keyQ() + '&t=' + Date.now();
+        }
+
+        img.onload = () => {
+            hasFrame = true;
+            showLive();
+            frameCount++;
+            const now = Date.now();
+            if (now - fpsStart >= 2000) {
+                $('fps').innerText = (frameCount * 1000 / (now - fpsStart)).toFixed(1);
+                frameCount = 0;
+                fpsStart = now;
+            }
+            frameTimer = setTimeout(nextFrame, 60);
+        };
+
+        img.onerror = () => {
+            hasFrame = false;
+            $('fps').innerText = '0.0';
+            showPlaceholder();
+            frameTimer = setTimeout(nextFrame, 1500);
+        };
+
+        function restartStream() {
+            clearTimeout(frameTimer);
+            setStatus('CONNECTING...', 'amber');
+            nextFrame();
+        }
+
+        // ---------- light + settings ----------
+        function updateLightUI() {
+            const statusCard = $('light-status-card');
+            const statusText = $('light-status-text');
+            const lightIcon = $('light-icon');
+            const actionText = $('btn-action-text');
+
+            if (isLightOn) {
+                statusCard.className = 'bg-amber-100 border-2 border-amber-400 rounded-2xl p-3 glow-pulse-on transition-all duration-300';
+                statusText.innerHTML = '<i class="fa-solid fa-sun text-amber-500 animate-spin"></i> LIGHT IS ON ✨';
+                statusText.className = 'font-pop text-xl text-amber-600 flex items-center justify-center gap-2';
+                lightIcon.className = 'fa-solid fa-lightbulb text-4xl text-amber-400 animate-pulse';
+                actionText.innerText = 'TURN OFF';
+            } else {
+                statusCard.className = 'bg-gray-100 border-2 border-gray-300 rounded-2xl p-3 transition-all duration-300';
+                statusText.innerHTML = '<i class="fa-solid fa-moon text-gray-400"></i> LIGHT IS OFF';
+                statusText.className = 'font-pop text-xl text-gray-500 flex items-center justify-center gap-2';
+                lightIcon.className = 'fa-solid fa-lightbulb text-4xl text-gray-500';
+                actionText.innerText = 'TURN ON';
+            }
+        }
+
+        async function toggleLight() {
+            isLightOn = !isLightOn;
+            lastLocalChange = Date.now();
+            updateLightUI();
+            try {
+                const r = await api('POST', { light: isLightOn });
+                isLightOn = !!r.ctrl.light;
+            } catch (err) {
+                isLightOn = !isLightOn;
+                console.error(err);
+                if (err.message !== 'locked') alert('Could not send the command to the server. Check your connection.');
+            }
+            updateLightUI();
+        }
+
+        async function sendSetting(name, value) {
+            lastLocalChange = Date.now();
+            try {
+                await api('POST', { [name]: parseInt(value, 10) });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function applyCtrl(ctrl) {
+            if (Date.now() - lastLocalChange < 2500) return;
+            isLightOn = !!ctrl.light;
+            updateLightUI();
+            $('slider-brightness').value = ctrl.brightness;
+            $('val-brightness').innerText = ctrl.brightness;
+            $('slider-contrast').value = ctrl.contrast;
+            $('val-contrast').innerText = ctrl.contrast;
+            $('select-framesize').value = String(ctrl.framesize);
+        }
+
+        // ---------- status polling ----------
+        async function pollState() {
+            try {
+                const r = await api('GET');
+                cameraOnline = !!r.online;
+                applyCtrl(r.ctrl);
+                if (!hasFrame) showPlaceholder();
+            } catch (err) {
+                if (err.message !== 'locked') setStatus('SERVER UNREACHABLE', 'red');
+            }
+        }
+
+        // ---------- fullscreen ----------
+        function toggleFullScreen() {
+            const elem = $('video-container');
+            if (!document.fullscreenElement) {
+                if (elem.requestFullscreen) elem.requestFullscreen();
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+
+        // ---------- go ----------
+        updateLightUI();
+        pollState();
+        setInterval(pollState, 3000);
+        nextFrame();
+    </script>
+</body>
+</html>
