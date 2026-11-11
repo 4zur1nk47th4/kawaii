@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Kawaii ESP32-CAM Studio ✨</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Fredoka & Comic Neue for playful anime aesthetic) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'anime-pink': '#FF85A2',
+                        'anime-purple': '#B388FF',
+                        'anime-yellow': '#FFE17D',
+                        'anime-blue': '#70D6FF',
+                        'anime-mint': '#99E2B4',
+                        'anime-card': 'rgba(255, 255, 255, 0.85)'
+                    },
+                    fontFamily: {
+                        'pop': ['"Mochiy Pop One"', 'sans-serif'],
+                        'fredoka': ['Fredoka', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #ffcbf2 0%, #e7c6ff 30%, #c8b6ff 60%, #b8c0ff 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Anime Sparkle Effects */
+        .sparkle {
+            position: absolute;
+            pointer-events: none;
+            animation: floatSparkle 4s linear infinite;
+        }
+
+        @keyframes floatSparkle {
+            0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; }
+            50% { opacity: 0.9; }
+            100% { transform: translateY(-100px) rotate(180deg) scale(1.2); opacity: 0; }
+        }
+
+        .anime-card-shadow {
+            box-shadow: 0 10px 30px rgba(179, 136, 255, 0.3), 0 0 15px rgba(255, 133, 162, 0.4);
+            border: 3px solid #FFFFFF;
+        }
+
+        .neon-btn {
+            transition: all 0.2s ease;
+        }
+        .neon-btn:hover {
+            transform: translateY(-3deg) scale(1.02);
+            box-shadow: 0 0 20px rgba(255, 133, 162, 0.8), 0 0 30px rgba(179, 136, 255, 0.6);
+        }
+        .neon-btn:active {
+            transform: translateY(1deg) scale(0.98);
+        }
+
+        /* Pulse glow for status */
+        .glow-pulse-on {
+            animation: pulseGlowOn 1.5s infinite alternate;
+        }
+        @keyframes pulseGlowOn {
+            from { box-shadow: 0 0 10px #FFDD00, 0 0 20px #FFDD00; }
+            to { box-shadow: 0 0 20px #FFDD00, 0 0 35px #FF85A2; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #ffcbf2;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #B388FF;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="relative overflow-x-hidden text-gray-800 pb-12">
+
+    <!-- Floating Background Anime Sparkles & Deco -->
+    <div id="sparkle-container"></div>
+
+    <!-- Header Section -->
+    <header class="pt-6 pb-2 text-center relative z-10 px-4">
+        <div class="inline-block bg-white/80 backdrop-blur-md px-8 py-4 rounded-full border-4 border-anime-pink shadow-lg mb-2 transform -rotate-1 hover:rotate-0 transition-transform">
+            <h1 class="font-pop text-2xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 flex items-center justify-center gap-3">
+                <i class="fa-solid font-normal fa-wand-magic-sparkles text-anime-yellow text-3xl animate-bounce"></i>
+                Kawaii ESP32 Studio
+                <i class="fa-solid font-normal fa-cat text-anime-pink text-3xl"></i>
+            </h1>
+        </div>
+        <p class="text-sm sm:text-base font-semibold text-purple-800 bg-white/60 inline-block px-4 py-1 rounded-full shadow-sm">
+            📡 Network: <span class="text-pink-600 font-bold">t77</span> | 🔑 Pass: <span class="text-purple-700 font-bold">87654321</span>
+        </p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 mt-4 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+
+        <!-- Left Column: Video Stream (8 cols) -->
+        <section class="lg:col-span-8 flex flex-col gap-4">
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-4 sm:p-6 anime-card-shadow relative">
+                
+                <!-- Cute Mascot Badge -->
+                <div class="absolute -top-5 -left-3 bg-anime-yellow text-pink-700 px-4 py-1.5 rounded-full text-xs font-pop border-2 border-white shadow-md flex items-center gap-1.5">
+                    <i class="fa-solid fa-heart animate-pulse"></i> LIVE FEED 🌸
+                </div>
+
+                <!-- Video Header Info & Fullscreen Toggle -->
+                <div class="flex justify-between items-center mb-3 pt-2">
+                    <div class="flex items-center gap-2">
+                        <span id="status-dot" class="w-3.5 h-3.5 rounded-full bg-red-500 inline-block animate-ping"></span>
+                        <span id="status-text" class="text-xs font-bold uppercase tracking-wider text-gray-500">Connecting...</span>
+                    </div>
+                    <button id="fullscreen-btn" onclick="toggleFullScreen()" class="text-xs bg-anime-purple text-white px-3 py-1.5 rounded-xl hover:bg-purple-600 transition flex items-center gap-1 font-bold">
+                        <i class="fa-solid fa-expand"></i> Full Screen
+                    </button>
+                </div>
+
+                <!-- Camera Stream Screen -->
+                <div id="video-container" class="relative w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden border-4 border-anime-pink shadow-inner flex items-center justify-center group">
+                    
+                    <!-- Stream Image Element -->
+                    <img id="stream-img" src="" alt="ESP32 Live Stream" class="w-full h-full object-cover hidden" onload="onStreamLoad()" onerror="onStreamError()">
+                    
+                    <!-- Stream Placeholder / Offline Screen -->
+                    <div id="stream-placeholder" class="text-center p-6 flex flex-col items-center gap-3 text-white">
+                        <div class="w-20 h-20 bg-pink-100/20 rounded-full flex items-center justify-center border-2 border-dashed border-pink-300 animate-spin">
+                            <i class="fa-solid fa-camera-retro text-4xl text-anime-pink"></i>
+                        </div>
+                        <p class="font-pop text-lg text-pink-200">Camera Disconnected</p>
+                        <p class="text-xs text-gray-300 max-w-xs">Connect your computer to the t77 Wi-Fi network, then click Connect ✨</p>
+                    </div>
+
+                    <!-- Overlay Decorative Manga Watermark -->
+                    <div class="absolute bottom-3 right-3 bg-black/40 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-pop opacity-75 group-hover:opacity-100 transition">
+                        ESP32-CAM ⚡ LIVE
+                    </div>
+                </div>
+
+                <!-- Quick Stats / Controls bar below stream -->
+                <div class="mt-4 flex flex-wrap justify-between items-center gap-3 bg-pink-50 p-3 rounded-2xl border border-pink-200">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-network-wired text-anime-purple text-xl"></i>
+                        <input type="text" id="esp-ip" value="192.168.4.1" placeholder="ESP32 IP Address" 
+                               class="bg-white px-3 py-1.5 text-sm rounded-xl border-2 border-pink-300 focus:outline-none focus:border-anime-pink text-gray-700 font-mono w-40">
+                    </div>
+                    <button onclick="updateStreamUrl()" class="neon-btn bg-gradient-to-r from-anime-pink to-anime-purple text-white px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow">
+                        <i class="fa-solid fa-plug"></i> Connect Stream
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Light Switch & Camera Settings (4 cols) -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+
+            <!-- Flash Light Switch Control Box -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 anime-card-shadow relative flex flex-col items-center text-center">
+                
+                <div class="absolute -top-4 bg-anime-purple text-white px-4 py-1 rounded-full text-xs font-pop border-2 border-white shadow">
+                    💡 FLASH LIGHT CONTROL
+                </div>
+
+                <!-- Flash Status Indicator Banner -->
+                <div class="mt-3 mb-4 w-full">
+                    <div id="light-status-card" class="bg-gray-100 border-2 border-gray-300 rounded-2xl p-3 transition-all duration-300">
+                        <span class="text-xs uppercase tracking-widest font-bold text-gray-500 block mb-1">LED Flash Status</span>
+                        <span id="light-status-text" class="font-pop text-xl text-gray-600 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-moon"></i> LIGHT IS OFF
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Large Interactive Toggle Button -->
+                <button id="toggle-light-btn" onclick="toggleLight()" class="neon-btn w-40 h-40 rounded-full bg-gradient-to-b from-yellow-300 to-amber-400 border-8 border-white shadow-xl flex flex-col items-center justify-center gap-2 text-gray-800 transition-all transform active:scale-95 cursor-pointer my-2">
+                    <div class="w-16 h-16 rounded-full bg-white/40 flex items-center justify-center">
+                        <i id="light-icon" class="fa-solid fa-lightbulb text-4xl text-gray-600"></i>
+                    </div>
+                    <span id="btn-action-text" class="font-pop text-sm tracking-wide">TURN ON</span>
+                </button>
+
+                <p class="text-xs text-purple-600 font-semibold mt-3">
+                    <i class="fa-solid fa-wand-magic"></i> Toggle high-intensity flash LED on Pin GPIO 4
+                </p>
+            </div>
+
+            <!-- Fine-tune Camera Controls -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 anime-card-shadow relative">
+                <div class="absolute -top-4 left-6 bg-anime-pink text-white px-4 py-1 rounded-full text-xs font-pop border-2 border-white shadow">
+                    ⚙️ STREAM ADJUSTMENTS
+                </div>
+
+                <div class="space-y-4 pt-2">
+                    <!-- Brightness Control -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-gray-700 mb-1">
+                            <span><i class="fa-solid fa-sun text-amber-400"></i> Brightness</span>
+                            <span id="val-brightness">0</span>
+                        </div>
+                        <input type="range" min="-2" max="2" value="0" id="slider-brightness" onchange="sendCameraSetting('brightness', this.value)" 
+                               class="w-full accent-anime-pink cursor-pointer">
+                    </div>
+
+                    <!-- Contrast Control -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-gray-700 mb-1">
+                            <span><i class="fa-solid fa-circle-half-stroke text-purple-400"></i> Contrast</span>
+                            <span id="val-contrast">0</span>
+                        </div>
+                        <input type="range" min="-2" max="2" value="0" id="slider-contrast" onchange="sendCameraSetting('contrast', this.value)" 
+                               class="w-full accent-anime-purple cursor-pointer">
+                    </div>
+
+                    <!-- Resolution Selection -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">
+                            <i class="fa-solid fa-tv text-blue-400"></i> Stream Resolution
+                        </label>
+                        <select id="select-framesize" onchange="sendCameraSetting('framesize', this.value)" 
+                                class="w-full bg-pink-50 border-2 border-pink-200 text-gray-700 text-xs rounded-xl p-2.5 focus:outline-none focus:border-anime-pink font-semibold">
+                            <option value="9">QVGA (320x240) - Fast</option>
+                            <option value="8" selected>VGA (640x480) - Balanced</option>
+                            <option value="6">SVGA (800x600) - Detailed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Cute Manga Decoration Sticker -->
+                <div class="mt-5 p-3 bg-purple-50 rounded-2xl border border-purple-200 flex items-center justify-between">
+                    <div class="text-xs text-purple-700 font-bold">
+                        <span>(⁠っ⁠.⁠❛⁠ ⁠u⁠ ⁠❛⁠.⁠)⁠っ</span>
+                        <span class="block text-[10px] text-purple-500 font-normal">System Ready for Stream</span>
+                    </div>
+                    <i class="fa-solid fa-heart text-pink-400 text-lg"></i>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- JS Logic -->
+    <script>
+        let isLightOn = false;
+
+        // Generate Random Floating Sparkles
+        function createSparkles() {
+            const container = document.getElementById('sparkle-container');
+            const icons = ['✨', '🌸', '⭐', '💖', '💫'];
+            for (let i = 0; i < 15; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle text-xl';
+                sparkle.innerText = icons[Math.floor(Math.random() * icons.length)];
+                sparkle.style.left = Math.random() * 100 + 'vw';
+                sparkle.style.top = Math.random() * 100 + 'vh';
+                sparkle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                sparkle.style.animationDelay = (Math.random() * 2) + 's';
+                container.appendChild(sparkle);
+            }
+        }
+        createSparkles();
+
+        // Helper to get base IP URL
+        function getBaseUrl() {
+            const ip = document.getElementById('esp-ip').value.trim();
+            return `http://${ip}`;
+        }
+
+        // Connect/Update Stream Source
+        function updateStreamUrl() {
+            const img = document.getElementById('stream-img');
+            const placeholder = document.getElementById('stream-placeholder');
+            const statusText = document.getElementById('status-text');
+            const statusDot = document.getElementById('status-dot');
+
+            statusText.innerText = "CONNECTING...";
+            statusText.className = "text-xs font-bold uppercase tracking-wider text-amber-500";
+            statusDot.className = "w-3.5 h-3.5 rounded-full bg-amber-400 inline-block animate-ping";
+
+            // ESP32 MJPEG Stream endpoint on port 81 (or main root port depending on setup)
+            const streamUrl = `${getBaseUrl()}/stream`;
+            img.src = streamUrl;
+            img.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        }
+
+        function onStreamLoad() {
+            const statusText = document.getElementById('status-text');
+            const statusDot = document.getElementById('status-dot');
+            statusText.innerText = "ONLINE (LIVE)";
+            statusText.className = "text-xs font-bold uppercase tracking-wider text-emerald-500";
+            statusDot.className = "w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block";
+        }
+
+        function onStreamError() {
+            const img = document.getElementById('stream-img');
+            const placeholder = document.getElementById('stream-placeholder');
+            const statusText = document.getElementById('status-text');
+            const statusDot = document.getElementById('status-dot');
+
+            img.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            statusText.innerText = "OFFLINE";
+            statusText.className = "text-xs font-bold uppercase tracking-wider text-red-500";
+            statusDot.className = "w-3.5 h-3.5 rounded-full bg-red-500 inline-block";
+        }
+
+        // Toggle Onboard Flash Light
+        function toggleLight() {
+            isLightOn = !isLightOn;
+            const state = isLightOn ? 'on' : 'off';
+
+            fetch(`${getBaseUrl()}:81/light?status=${state}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.text();
+                })
+                .then(text => {
+                    isLightOn = text.trim() === 'ON';
+                    updateLightUI();
+                })
+                .catch(err => {
+                    // Keep the UI responsive, but report that the ESP32 did not confirm the command.
+                    console.error('Could not control ESP32 flash LED:', err);
+                    isLightOn = !isLightOn;
+                    updateLightUI();
+                    alert('Could not reach the ESP32-CAM flashlight. Check that your computer is connected to the t77 Wi-Fi network.');
+                });
+
+            updateLightUI();
+        }
+
+        // Update Flash Light Controls UI Visuals
+        function updateLightUI() {
+            const statusCard = document.getElementById('light-status-card');
+            const statusText = document.getElementById('light-status-text');
+            const lightIcon = document.getElementById('light-icon');
+            const actionText = document.getElementById('btn-action-text');
+
+            if (isLightOn) {
+                statusCard.className = "bg-amber-100 border-2 border-amber-400 rounded-2xl p-3 glow-pulse-on transition-all duration-300";
+                statusText.innerHTML = `<i class="fa-solid fa-sun text-amber-500 animate-spin"></i> LIGHT IS ON ✨`;
+                statusText.className = "font-pop text-xl text-amber-600 flex items-center justify-center gap-2";
+
+                lightIcon.className = "fa-solid fa-lightbulb text-4xl text-amber-400 animate-pulse";
+                actionText.innerText = "TURN OFF";
+            } else {
+                statusCard.className = "bg-gray-100 border-2 border-gray-300 rounded-2xl p-3 transition-all duration-300";
+                statusText.innerHTML = `<i class="fa-solid fa-moon text-gray-400"></i> LIGHT IS OFF`;
+                statusText.className = "font-pop text-xl text-gray-500 flex items-center justify-center gap-2";
+
+                lightIcon.className = "fa-solid fa-lightbulb text-4xl text-gray-500";
+                actionText.innerText = "TURN ON";
+            }
+        }
+
+        // Send Camera Parameters Settings
+        function sendCameraSetting(variable, value) {
+            if (variable === 'brightness') document.getElementById('val-brightness').innerText = value;
+            if (variable === 'contrast') document.getElementById('val-contrast').innerText = value;
+
+            fetch(`${getBaseUrl()}/control?var=${variable}&val=${value}`, { mode: 'no-cors' })
+                .then(() => console.log(`Set ${variable} to ${value}`))
+                .catch(err => console.error(err));
+        }
+
+        // Fullscreen Toggle
+        function toggleFullScreen() {
+            const elem = document.getElementById('video-container');
+            if (!document.fullscreenElement) {
+                if (elem.requestFullscreen) elem.requestFullscreen();
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>
